@@ -55,9 +55,48 @@ detect_compose() {
   fi
 }
 
+# --- component checks --------------------------------------------------------
+check_uv() {
+  if command -v uv >/dev/null 2>&1; then
+    pass "uv" "$(uv --version 2>/dev/null)"
+  else
+    fail "uv" "not installed — https://docs.astral.sh/uv/getting-started/installation/"
+  fi
+}
+
+check_python() {
+  if ! command -v uv >/dev/null 2>&1; then
+    skip "Python ${PYTHON_MIN}+" "uv not installed"
+    return 0
+  fi
+  local found
+  if found="$(uv python find ">=${PYTHON_MIN}" 2>/dev/null)"; then
+    pass "Python ${PYTHON_MIN}+" "$found"
+  else
+    fail "Python ${PYTHON_MIN}+" "no interpreter >=${PYTHON_MIN} (fix: uv python install ${PYTHON_MIN})"
+  fi
+}
+
+check_deps() {  # args: label dir
+  local label="$1" dir="$2"
+  if ! command -v uv >/dev/null 2>&1; then
+    skip "${label} deps" "uv not installed"
+    return 0
+  fi
+  if (cd "$dir" && uv sync --dev --check >/dev/null 2>&1); then
+    pass "${label} deps" "synced"
+  else
+    fail "${label} deps" "venv missing or out of sync"
+  fi
+}
+
 # --- check mode --------------------------------------------------------------
 mode_check() {
   detect_compose
+  check_uv
+  check_python
+  check_deps "agent" "agent"
+  check_deps "index" "index"
   print_summary
 }
 
