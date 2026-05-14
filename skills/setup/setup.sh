@@ -55,6 +55,25 @@ detect_compose() {
   fi
 }
 
+# --- claude plugin state helper ---------------------------------------------
+# Returns: 0 = installed and enabled, 1 = not installed, 2 = installed but
+# disabled, 3 = could not read plugin list. Arg: plugin id (name@marketplace).
+_plugin_state() {
+  local json
+  json="$(claude plugin list --json 2>/dev/null)" || return 3
+  printf '%s' "$json" | python3 -c "
+import sys, json
+target = sys.argv[1]
+try:
+    plugins = {p['id']: p.get('enabled', False) for p in json.load(sys.stdin)}
+except Exception:
+    sys.exit(3)
+if target not in plugins:
+    sys.exit(1)
+sys.exit(0 if plugins[target] else 2)
+" "$1"
+}
+
 # --- component checks --------------------------------------------------------
 check_uv() {
   if command -v uv >/dev/null 2>&1; then
@@ -170,6 +189,29 @@ check_env_files() {
   fi
 }
 
+check_plugin() {  # args: name marketplace
+  local name="$1" marketplace="$2" id="$1@$2"
+  if ! command -v claude >/dev/null 2>&1; then
+    skip "${name} plugin" "Claude Code CLI not found"
+    return 0
+  fi
+  _plugin_state "$id"
+  case $? in
+    0) pass "${name} plugin" "installed and enabled" ;;
+    1) fail "${name} plugin" "not installed" ;;
+    2) fail "${name} plugin" "installed but disabled" ;;
+    *) fail "${name} plugin" "could not read plugin list" ;;
+  esac
+}
+
+check_ax_cli() {
+  if command -v ax >/dev/null 2>&1; then
+    pass "arize-ax-cli" "$(ax --version 2>&1)"
+  else
+    fail "arize-ax-cli" "not installed (fix: uv tool install arize-ax-cli)"
+  fi
+}
+
 # --- check mode --------------------------------------------------------------
 mode_check() {
   detect_compose
@@ -183,6 +225,9 @@ mode_check() {
   check_os_image
   check_os_container
   check_env_files
+  check_plugin superpowers claude-plugins-official
+  check_plugin arize-skills Arize-ai-arize-skills
+  check_ax_cli
   print_summary
 }
 
