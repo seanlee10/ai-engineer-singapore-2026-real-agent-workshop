@@ -116,6 +116,60 @@ check_npm() {
   fi
 }
 
+check_docker() {
+  if ! command -v docker >/dev/null 2>&1; then
+    fail "Docker daemon" "docker not installed — https://docs.docker.com/get-docker/"
+    return 0
+  fi
+  if docker info >/dev/null 2>&1; then
+    pass "Docker daemon" "running"
+  else
+    fail "Docker daemon" "not running — start Docker Desktop"
+  fi
+}
+
+check_os_image() {
+  if ! docker info >/dev/null 2>&1; then
+    skip "OpenSearch image" "Docker not running"
+    return 0
+  fi
+  if docker image inspect "$OS_IMAGE" >/dev/null 2>&1; then
+    pass "OpenSearch image" "$OS_IMAGE present"
+  else
+    fail "OpenSearch image" "$OS_IMAGE not pulled"
+  fi
+}
+
+check_os_container() {
+  if ! docker info >/dev/null 2>&1; then
+    skip "OpenSearch container" "Docker not running"
+    return 0
+  fi
+  if curl -fs http://localhost:9200 >/dev/null 2>&1; then
+    pass "OpenSearch container" "responding on :9200"
+  else
+    fail "OpenSearch container" "not responding on :9200"
+  fi
+}
+
+check_env_files() {
+  local missing=0 placeholder=0 f
+  for f in agent/.env index/.env; do
+    if [ ! -f "$f" ]; then
+      missing=1
+    elif grep -qE "sk-\.\.\.|your-" "$f" 2>/dev/null; then
+      placeholder=1
+    fi
+  done
+  if [ "$missing" -eq 1 ]; then
+    fail ".env files" "agent/.env or index/.env missing"
+  elif [ "$placeholder" -eq 1 ]; then
+    warn ".env files" "present but contain placeholder values — fill in API keys"
+  else
+    pass ".env files" "present"
+  fi
+}
+
 # --- check mode --------------------------------------------------------------
 mode_check() {
   detect_compose
@@ -125,6 +179,10 @@ mode_check() {
   check_deps "index" "index"
   check_node
   check_npm
+  check_docker
+  check_os_image
+  check_os_container
+  check_env_files
   print_summary
 }
 
