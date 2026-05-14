@@ -1,0 +1,31 @@
+{
+  "branchName": "ralph/self-improvement-v1",
+  "dataset": {
+    "name": "legal-rag-bench-qa",
+    "id": "RGF0YXNldDoyNjpGNDBF"
+  },
+  "stories": [
+    {
+      "id": "story-001",
+      "title": "Baseline retrieval evaluation",
+      "passes": false,
+      "priority": 1,
+      "description": "Run an Arize experiment against the legal-rag-bench-qa dataset to establish baseline recall metrics. No code changes — just measure current performance.",
+      "acceptanceCriteria": [
+        "Arize experiment completes against all examples in legal-rag-bench-qa",
+        "Recall@1, Recall@5, Recall@10 metrics are recorded in progress.txt"
+      ]
+    },
+    {
+      "id": "story-002",
+      "title": "Improve retrieval recall@5 above 80%",
+      "passes": false,
+      "priority": 2,
+      "description": "Analyze baseline experiment failures and implement improvements to agent/ retrieval logic and/or index/ pipeline to push Recall@5 above 80%.",
+      "acceptanceCriteria": [
+        "Arize experiment shows Recall@5 > 80%",
+        "All quality checks pass (lint, typecheck, tests)"
+      ]
+    }
+  ]
+}

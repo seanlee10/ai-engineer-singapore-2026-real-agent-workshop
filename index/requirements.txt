@@ -1,0 +1,4 @@
+datasets
+langchain-text-splitters
+requests
+python-dotenv
