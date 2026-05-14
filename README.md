@@ -15,7 +15,7 @@ skills/             Skill definitions for the Ralph agent (PRD generation, story
 ## Prerequisites
 
 1. **[Arize](https://arize.com/) account** — sign up at arize.com (free tier available)
-2. **Python 3.10+** and [uv](https://docs.astral.sh/uv/)
+2. **Python 3.13+** and [uv](https://docs.astral.sh/uv/)
 3. **Claude Code** — install via `npm install -g @anthropic-ai/claude-code`
 4. **Arize AX CLI:**
    ```bash

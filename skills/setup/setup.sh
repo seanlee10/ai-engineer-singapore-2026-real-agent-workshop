@@ -157,7 +157,7 @@ check_env_files() {
   for f in agent/.env index/.env; do
     if [ ! -f "$f" ]; then
       missing=1
-    elif grep -qE "sk-\.\.\.|your-" "$f" 2>/dev/null; then
+    elif grep -qE "sk-[a-z-]*\.\.\.|your-" "$f" 2>/dev/null; then
       placeholder=1
     fi
   done
