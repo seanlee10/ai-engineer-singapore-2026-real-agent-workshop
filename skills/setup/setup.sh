@@ -5,6 +5,7 @@
 #   bash skills/setup/setup.sh check   Read-only. Prints a pass/fail summary. Exits non-zero on failure.
 #   bash skills/setup/setup.sh fix     Runs project-level auto-fixes. Idempotent.
 set -uo pipefail
+# -e is intentionally omitted: check functions are expected to return non-zero on failure.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_ROOT"
@@ -17,7 +18,12 @@ NODE_MIN="20"
 ROWS=()
 OVERALL_OK=1
 
-record() { ROWS+=("$1|$2|$3"); [ "$1" = "FAIL" ] && OVERALL_OK=0; return 0; }
+record() {
+  ROWS+=("${1}"$'\x1f'"${2}"$'\x1f'"${3}")
+  if [ "$1" = "FAIL" ]; then
+    OVERALL_OK=0
+  fi
+}
 pass() { record "PASS" "$1" "$2"; }
 fail() { record "FAIL" "$1" "$2"; }
 warn() { record "WARN" "$1" "$2"; }
@@ -27,7 +33,7 @@ print_summary() {
   echo
   echo "=== Environment summary ==="
   for row in "${ROWS[@]+"${ROWS[@]}"}"; do
-    IFS='|' read -r status component detail <<< "$row"
+    IFS=$'\x1f' read -r status component detail <<< "$row"
     printf "  [%-4s] %-22s %s\n" "$status" "$component" "$detail"
   done
   echo
