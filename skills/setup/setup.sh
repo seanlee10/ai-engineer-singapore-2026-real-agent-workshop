@@ -90,6 +90,32 @@ check_deps() {  # args: label dir
   fi
 }
 
+check_node() {
+  if ! command -v node >/dev/null 2>&1; then
+    fail "Node ${NODE_MIN}+" "not installed — https://nodejs.org/"
+    return 0
+  fi
+  local major
+  major="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null)"
+  if [ -n "$major" ] && [ "$major" -ge "$NODE_MIN" ] 2>/dev/null; then
+    pass "Node ${NODE_MIN}+" "$(node --version)"
+  else
+    fail "Node ${NODE_MIN}+" "found $(node --version 2>/dev/null), need >=${NODE_MIN}"
+  fi
+}
+
+check_npm() {
+  if [ ! -f package.json ]; then
+    skip "npm packages" "no package.json yet"
+    return 0
+  fi
+  if [ -d node_modules ]; then
+    pass "npm packages" "installed"
+  else
+    fail "npm packages" "node_modules missing"
+  fi
+}
+
 # --- check mode --------------------------------------------------------------
 mode_check() {
   detect_compose
@@ -97,6 +123,8 @@ mode_check() {
   check_python
   check_deps "agent" "agent"
   check_deps "index" "index"
+  check_node
+  check_npm
   print_summary
 }
 
