@@ -186,8 +186,82 @@ mode_check() {
   print_summary
 }
 
+# --- fix functions -----------------------------------------------------------
+fix_python() {
+  command -v uv >/dev/null 2>&1 || { echo "skip: uv not installed"; return 0; }
+  if uv python find ">=${PYTHON_MIN}" >/dev/null 2>&1; then
+    echo "ok: Python ${PYTHON_MIN}+ already available"
+    return 0
+  fi
+  echo "fixing: installing Python ${PYTHON_MIN}..."
+  uv python install "$PYTHON_MIN"
+}
+
+fix_deps() {  # args: label dir
+  local label="$1" dir="$2"
+  command -v uv >/dev/null 2>&1 || { echo "skip: uv not installed"; return 0; }
+  echo "fixing: syncing ${label} dependencies..."
+  (cd "$dir" && uv sync --dev)
+}
+
+fix_env_files() {
+  local f
+  for f in agent index; do
+    if [ ! -f "${f}/.env" ] && [ -f "${f}/.env.example" ]; then
+      echo "fixing: creating ${f}/.env from .env.example..."
+      cp "${f}/.env.example" "${f}/.env"
+    fi
+  done
+}
+
+fix_os_image() {
+  detect_compose
+  docker info >/dev/null 2>&1 || { echo "skip: Docker not running"; return 0; }
+  [ -n "$COMPOSE" ] || { echo "skip: no docker compose command found"; return 0; }
+  echo "fixing: pulling OpenSearch image..."
+  $COMPOSE pull
+}
+
+fix_os_container() {
+  detect_compose
+  docker info >/dev/null 2>&1 || { echo "skip: Docker not running"; return 0; }
+  [ -n "$COMPOSE" ] || { echo "skip: no docker compose command found"; return 0; }
+  echo "fixing: starting OpenSearch container..."
+  $COMPOSE up -d
+  echo "waiting for OpenSearch on :9200..."
+  local i
+  for i in $(seq 1 30); do
+    if curl -fs http://localhost:9200 >/dev/null 2>&1; then
+      echo "ok: OpenSearch responding"
+      return 0
+    fi
+    sleep 2
+  done
+  echo "warning: OpenSearch did not respond within 60s"
+}
+
+fix_npm() {
+  [ -f package.json ] || { echo "skip: no package.json yet"; return 0; }
+  command -v npm >/dev/null 2>&1 || { echo "skip: npm not installed"; return 0; }
+  if [ -f package-lock.json ]; then
+    echo "fixing: npm ci..."
+    npm ci
+  else
+    echo "fixing: npm install..."
+    npm install
+  fi
+}
+
 # --- fix mode ----------------------------------------------------------------
 mode_fix() {
+  fix_python
+  fix_deps "agent" "agent"
+  fix_deps "index" "index"
+  fix_env_files
+  fix_os_image
+  fix_os_container
+  fix_npm
+  echo
   echo "Fixes applied. Re-run: bash skills/setup/setup.sh check"
 }
 
