@@ -50,6 +50,9 @@ Get the project into a runnable state by running `skills/setup/setup.sh`.
    - **Node not installed / too old** — https://nodejs.org/ (need >=20)
    - **`.env` placeholder values** — the user must fill in real API keys in
      `agent/.env` and `index/.env`
+   - **Claude Code CLI not found** — the `superpowers` / `arize-skills` plugin
+     rows show `[SKIP]`; install Claude Code with
+     `npm install -g @anthropic-ai/claude-code`
 
 ---
 
@@ -58,6 +61,8 @@ Get the project into a runnable state by running `skills/setup/setup.sh`.
 - `check` is read-only and safe to run anytime.
 - `fix` is idempotent — safe to run repeatedly.
 - The script auto-detects `docker compose` vs `docker-compose`.
-- `fix` only handles project-level items (dependency syncs, Python install via
-  uv, image pull, container start, `.env` creation, `npm install`). System-level
-  prerequisites (`uv`, Docker, Node) are reported, never auto-installed.
+- `fix` handles project-level items (dependency syncs, Python install via uv,
+  image pull, container start, `.env` creation, `npm install`) and Claude Code
+  tooling (plugin install/enable, `arize-ax-cli` via `uv tool install`).
+  System-level prerequisites — `uv`, Docker, Node, and the Claude Code CLI
+  itself — are reported, never auto-installed.
