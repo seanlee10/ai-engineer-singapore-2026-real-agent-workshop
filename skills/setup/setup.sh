@@ -297,6 +297,42 @@ fix_npm() {
   fi
 }
 
+fix_plugin() {  # args: name marketplace repo
+  local name="$1" marketplace="$2" repo="$3" id="$1@$2"
+  if ! command -v claude >/dev/null 2>&1; then
+    echo "skip: Claude Code CLI not found"
+    return 0
+  fi
+  _plugin_state "$id"
+  case $? in
+    0)
+      echo "ok: ${name} plugin already enabled"
+      ;;
+    2)
+      echo "fixing: enabling ${name} plugin..."
+      claude plugin enable "$id"
+      ;;
+    *)
+      if ! claude plugin marketplace list 2>/dev/null | grep -qF "$marketplace"; then
+        echo "fixing: adding marketplace ${repo}..."
+        claude plugin marketplace add "$repo"
+      fi
+      echo "fixing: installing ${name} plugin..."
+      claude plugin install "$id"
+      ;;
+  esac
+}
+
+fix_ax_cli() {
+  if command -v ax >/dev/null 2>&1; then
+    echo "ok: arize-ax-cli already installed"
+    return 0
+  fi
+  command -v uv >/dev/null 2>&1 || { echo "skip: uv not installed"; return 0; }
+  echo "fixing: installing arize-ax-cli..."
+  uv tool install arize-ax-cli
+}
+
 # --- fix mode ----------------------------------------------------------------
 mode_fix() {
   fix_python
@@ -306,6 +342,9 @@ mode_fix() {
   fix_os_image
   fix_os_container
   fix_npm
+  fix_plugin superpowers claude-plugins-official anthropics/claude-plugins-official
+  fix_plugin arize-skills Arize-ai-arize-skills Arize-ai/arize-skills
+  fix_ax_cli
   echo
   echo "Fixes applied. Re-run: bash skills/setup/setup.sh check"
 }
