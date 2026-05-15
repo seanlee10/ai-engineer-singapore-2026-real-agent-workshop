@@ -23,7 +23,7 @@ if os.path.exists(env_path):
 from arize import ArizeClient
 from arize.experiments import EvaluationResult
 
-DATASET_ID = "RGF0YXNldDoyNjpGNDBF"  # legal-rag-bench-qa
+DATASET_ID = "RGF0YXNldDozNDUyOTg6UW5CaQ=="  # legal-rag-bench
 LANGGRAPH_URL = "http://127.0.0.1:2024"
 
 
@@ -89,15 +89,7 @@ def recall_at_10_evaluator(output, dataset_row):
 
 if __name__ == "__main__":
     experiment_name = sys.argv[1] if len(sys.argv) > 1 else "ralph-experiment"
-    client = ArizeClient(
-        api_key=os.environ["ARIZE_API_KEY"],
-        api_host="arize-app.iqhub.co",
-        api_scheme="https",
-        flight_host="grpc.iqhub.co",
-        flight_port=443,
-        flight_scheme="grpc+tls",
-        request_verify=False,
-    )
+    client = ArizeClient(api_key=os.environ["ARIZE_API_KEY"])
 
     print(f"Running Arize experiment: {experiment_name}")
     print(f"LangGraph agent: {LANGGRAPH_URL}")
